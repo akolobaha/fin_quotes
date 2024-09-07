@@ -1,0 +1,9 @@
+
+version: '3'
+
+tasks:
+  proto:
+    desc: "Update protofile from server's repository"
+    cmds:
+      -  curl -o pkg/grpc/data_management_grpc.pb.go https://raw.githubusercontent.com/akolobaha/fin_data_processing/fin_data_processing/pkg/grpc/data_management_grpc.pb.go
+      -  curl -o pkg/grpc/data_management.pb.go https://raw.githubusercontent.com/akolobaha/fin_data_processing/fin_data_processing/pkg/grpc/data_management.pb.go
