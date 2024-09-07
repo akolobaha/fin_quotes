@@ -1,0 +1,8 @@
+# окружение
+env = "local"
+
+# Время между запросами (наносек)
+tick = 1000000000
+
+# Котировки
+moex = "https://iss.moex.com/iss/engines/stock/markets/shares/boards/TQBR/securities.json?iss.meta=off&iss.only=marketdata&marketdata.columns=SECID,LAST,TIME"

@@ -1,3 +1,7 @@
+##
+Сервис производит получение данных с API мосбиржи в заданном временном интервале
+
+
 #### Общая идея
 Наша цель – создать окружение вокруг одного основного сервиса с минимальной логической нагрузкой.
 Простенький* сервис c полноценной обвязкой.
@@ -24,12 +28,13 @@
 ## Схемы сервиса
 ```plantuml
 @startuml
-
 component "Внутринние сервисы" {
 agent "Слежение за котировками" as tracker
 agent "Обработка данных" as storage
 agent "Рассылка уведомлений" as notification
 agent "Сбор данных" as parser
+
+queue rabbitMQ as rabbit
 }
 
 component "Данные" {
@@ -49,9 +54,12 @@ agent "Сайты с данными" as externalData
 }
 
 parser<-->externalData : Парсинг
-tracker-->storage
-storage-->notification
-parser-->storage
+tracker-->storage : gRPC
+
+parser-->storage : gRPC
+
+storage-[thickness=4]->rabbit :"отправка задания на рассылку" 
+rabbit-[thickness=4]->notification : "вычитка заданий"
 
 market<-->tracker : "Запрос текущей цены эмитента"
 
@@ -59,6 +67,5 @@ notification-->telegramm
 
 storage-->db
 db->storage
-
 @enduml
 ```
