@@ -10,9 +10,10 @@ import (
 const defaultConfigPath = "config.toml"
 
 type Config struct {
-	Env  string        `toml:"env" env-default:"local"`
-	Tick time.Duration `toml:"tick" env-default:"1"`
-	Moex string        `toml:"moex"`
+	Env         string        `toml:"env" env-default:"local"`
+	Tick        time.Duration `toml:"tick" env-default:"1"`
+	Moex        string        `toml:"moex"`
+	DataService string        `toml:"dataService"`
 }
 
 func MustLoad() *Config {

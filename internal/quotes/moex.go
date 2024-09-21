@@ -2,35 +2,43 @@ package quotes
 
 import (
 	"encoding/xml"
-	"fmt"
+	"io/ioutil"
+	"log/slog"
 	"net/http"
-	"time"
 )
 
-type Data struct {
-	XMLName xml.Name `xml:"data"`
-	Rows    Rows     `xml:"rows"`
+type MarketData struct {
+	Rows []Row `xml:"data>rows>row"`
 }
 
-type Rows struct {
-	XMLName xml.Name `xml:"rows"`
-	Row     []Ticker `xml:"row"`
+type Row struct {
+	SECID string  `xml:"SECID,attr"`
+	LAST  float32 `xml:"LAST,attr"`
+	TIME  string  `xml:"TIME,attr"`
 }
 
-type Ticker struct {
-	Name  string    `xml:"Name,attr"`
-	Price string    `xml:"Price,attr"`
-	Time  time.Time `xml:"Time,attr"`
-}
-
-func Fetch(url string) {
+func Fetch(url string) (MarketData, error) {
 
 	resp, err := http.Get(url)
 	if err != nil {
-		fmt.Println(err)
-		return
+		slog.Error(err.Error())
+		return MarketData{}, err
 	}
-	defer resp.Body.Close()
-	//io.Copy(os.Stdout, resp.Body)
 
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		slog.Error(err.Error())
+		return MarketData{}, err
+	}
+	//
+	var data MarketData
+	err = xml.Unmarshal(body, &data)
+	if err != nil {
+		slog.Error(err.Error())
+		return MarketData{}, err
+	}
+
+	return data, nil
 }

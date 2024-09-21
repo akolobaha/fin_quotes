@@ -1,0 +1,19 @@
+version: '3.8'
+
+networks:
+  fin-network:
+    driver: bridge
+    external: true
+
+
+services:
+  quotes:
+    image: fin-quotes-app
+    volumes:
+      - .:/home
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: quotes-app
+    networks:
+      - fin-network

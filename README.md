@@ -69,3 +69,9 @@ storage-->db
 db->storage
 @enduml
 ```
+
+### Сборк
+Перед сборкой контейнеров поднимаем общую сеть
+```
+docker network create fin-network
+```

@@ -3,6 +3,7 @@ package commands
 import (
 	"context"
 	"fin_quotes/internal/config"
+	"fin_quotes/internal/grpc"
 	"fin_quotes/internal/quotes"
 	"github.com/spf13/cobra"
 	"log/slog"
@@ -21,8 +22,14 @@ func NewServeCmd(config *config.Config, ctx context.Context, log *slog.Logger) *
 			for {
 				select {
 				case <-tick:
-					quotes.Fetch(config.Moex)
-					log.Info("Данные с Мосбиржи получены")
+					data, err := quotes.Fetch(config.Moex)
+					slog.Info("Данные с Мосбиржи получены")
+					if err != nil {
+						slog.Error(err.Error())
+					}
+
+					grpc.SendQuotes(ctx, data, config)
+
 				case <-ctx.Done():
 					log.Info("Сбор данных остановлен")
 					return nil
