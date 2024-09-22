@@ -5,10 +5,11 @@ import (
 	"fin_quotes/internal/config"
 	"fin_quotes/internal/quotes"
 	pb "fin_quotes/pkg/grpc"
-	"fmt"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"log"
+	"log/slog"
+	"strconv"
 	"time"
 )
 
@@ -24,16 +25,17 @@ func SendQuotes(ctx context.Context, marketData quotes.MarketData, cfg *config.C
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
-	reqItems := make([]*pb.TickerRequest, len(marketData.Rows))
+	reqItems := make([]*pb.TickerRequest, 0, len(marketData.Rows))
 	for _, item := range marketData.Rows {
 
 		t, err := time.Parse("15:04:05", item.TIME)
+		seqNum, err := strconv.ParseInt(item.SEQNUM, 10, 64)
 		if err != nil {
-			log.Fatalf("Error parsing time: %v", err)
+			log.Fatalf("Error parsing : %v", err)
 		}
 		timestamp := timestamppb.New(t)
 
-		reqItem := pb.TickerRequest{Name: item.SECID, Price: item.LAST, Time: timestamp}
+		reqItem := pb.TickerRequest{Name: item.SECID, Price: item.LAST, Time: timestamp, SeqNum: seqNum}
 		reqItems = append(reqItems, &reqItem)
 	}
 
@@ -44,7 +46,6 @@ func SendQuotes(ctx context.Context, marketData quotes.MarketData, cfg *config.C
 		log.Fatalf("could not send message: %v", err)
 	}
 
-	fmt.Println("Response from server: %s", response)
-	//log.Printf("Response from server: %s", response.Time, response.Price, response.Name)
-
+	slog.Info("Котировки отправлены в сервис обработки")
+	slog.Info(response.Response.String())
 }

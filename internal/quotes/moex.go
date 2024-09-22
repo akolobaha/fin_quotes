@@ -12,9 +12,10 @@ type MarketData struct {
 }
 
 type Row struct {
-	SECID string  `xml:"SECID,attr"`
-	LAST  float32 `xml:"LAST,attr"`
-	TIME  string  `xml:"TIME,attr"`
+	SECID  string  `xml:"SECID,attr"`
+	LAST   float32 `xml:"LAST,attr"`
+	TIME   string  `xml:"TIME,attr"`
+	SEQNUM string  `xml:"SEQNUM,attr"`
 }
 
 func Fetch(url string) (MarketData, error) {

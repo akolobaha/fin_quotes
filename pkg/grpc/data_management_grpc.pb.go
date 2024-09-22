@@ -19,7 +19,6 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	DataManagementService_GetQuotes_FullMethodName         = "/DataManagementService/GetQuotes"
 	DataManagementService_GetMultipleQuotes_FullMethodName = "/DataManagementService/GetMultipleQuotes"
 )
 
@@ -27,8 +26,7 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type DataManagementServiceClient interface {
-	GetQuotes(ctx context.Context, in *TickerRequest, opts ...grpc.CallOption) (*TickerResponse, error)
-	GetMultipleQuotes(ctx context.Context, in *MultipleTickerRequest, opts ...grpc.CallOption) (*MultipleTickerResponse, error)
+	GetMultipleQuotes(ctx context.Context, in *MultipleTickerRequest, opts ...grpc.CallOption) (*TickerResponse, error)
 }
 
 type dataManagementServiceClient struct {
@@ -39,19 +37,9 @@ func NewDataManagementServiceClient(cc grpc.ClientConnInterface) DataManagementS
 	return &dataManagementServiceClient{cc}
 }
 
-func (c *dataManagementServiceClient) GetQuotes(ctx context.Context, in *TickerRequest, opts ...grpc.CallOption) (*TickerResponse, error) {
+func (c *dataManagementServiceClient) GetMultipleQuotes(ctx context.Context, in *MultipleTickerRequest, opts ...grpc.CallOption) (*TickerResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(TickerResponse)
-	err := c.cc.Invoke(ctx, DataManagementService_GetQuotes_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *dataManagementServiceClient) GetMultipleQuotes(ctx context.Context, in *MultipleTickerRequest, opts ...grpc.CallOption) (*MultipleTickerResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(MultipleTickerResponse)
 	err := c.cc.Invoke(ctx, DataManagementService_GetMultipleQuotes_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -63,8 +51,7 @@ func (c *dataManagementServiceClient) GetMultipleQuotes(ctx context.Context, in 
 // All implementations must embed UnimplementedDataManagementServiceServer
 // for forward compatibility.
 type DataManagementServiceServer interface {
-	GetQuotes(context.Context, *TickerRequest) (*TickerResponse, error)
-	GetMultipleQuotes(context.Context, *MultipleTickerRequest) (*MultipleTickerResponse, error)
+	GetMultipleQuotes(context.Context, *MultipleTickerRequest) (*TickerResponse, error)
 	mustEmbedUnimplementedDataManagementServiceServer()
 }
 
@@ -75,10 +62,7 @@ type DataManagementServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedDataManagementServiceServer struct{}
 
-func (UnimplementedDataManagementServiceServer) GetQuotes(context.Context, *TickerRequest) (*TickerResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetQuotes not implemented")
-}
-func (UnimplementedDataManagementServiceServer) GetMultipleQuotes(context.Context, *MultipleTickerRequest) (*MultipleTickerResponse, error) {
+func (UnimplementedDataManagementServiceServer) GetMultipleQuotes(context.Context, *MultipleTickerRequest) (*TickerResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetMultipleQuotes not implemented")
 }
 func (UnimplementedDataManagementServiceServer) mustEmbedUnimplementedDataManagementServiceServer() {}
@@ -100,24 +84,6 @@ func RegisterDataManagementServiceServer(s grpc.ServiceRegistrar, srv DataManage
 		t.testEmbeddedByValue()
 	}
 	s.RegisterService(&DataManagementService_ServiceDesc, srv)
-}
-
-func _DataManagementService_GetQuotes_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(TickerRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(DataManagementServiceServer).GetQuotes(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: DataManagementService_GetQuotes_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DataManagementServiceServer).GetQuotes(ctx, req.(*TickerRequest))
-	}
-	return interceptor(ctx, in, info, handler)
 }
 
 func _DataManagementService_GetMultipleQuotes_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -145,10 +111,6 @@ var DataManagementService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "DataManagementService",
 	HandlerType: (*DataManagementServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
-		{
-			MethodName: "GetQuotes",
-			Handler:    _DataManagementService_GetQuotes_Handler,
-		},
 		{
 			MethodName: "GetMultipleQuotes",
 			Handler:    _DataManagementService_GetMultipleQuotes_Handler,

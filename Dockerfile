@@ -21,6 +21,7 @@ FROM alpine:latest
 
 # Копируем собранное приложение из этапа сборки
 COPY --from=builder /app/myapp /usr/local/bin/data_processing
+COPY --from=builder /app/config.toml /usr/local/bin/config.toml
 COPY --from=builder /app/config.toml /usr/local/config.toml
 
 # Указываем команду для запуска приложения

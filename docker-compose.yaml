@@ -11,6 +11,7 @@ services:
     image: fin-quotes-app
     volumes:
       - .:/home
+      - config.toml:/usr/local/config.toml
     build:
       context: .
       dockerfile: Dockerfile
