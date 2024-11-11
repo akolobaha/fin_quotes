@@ -28,18 +28,48 @@
 ## Схемы сервиса
 ```plantuml
 @startuml
-component "Внутринние сервисы" {
+
+actor "admin" as actor
+
+component "API gateway" as gateway {
+agent "REST" as rest
+}
+
+actor <---> rest
+
+
+component "Внутринние сервисы" as internal {
 agent "Слежение за котировками" as tracker
 agent "Обработка данных" as storage
 agent "Рассылка уведомлений" as notification
 agent "Сбор данных" as parser
 
-queue rabbitMQ as rabbit
+
+queue rabbitMQ {
+queue "сырые данные" as rabbit_data {
+
+}
+queue "задания на рассылку" as rabbit_notifications
+
 }
 
-component "Данные" {
-  database "База данных" as db
+
+database database [
+<b>Postgres
+====
+Котировки
+----
+Справочник эмитентов
+----
+Отчетность
+----
+Цели пользователей
+----
+Пользователи
+
+]
 }
+
 
 cloud {
 component "API Мосбиржи" as market
@@ -50,23 +80,28 @@ agent "телеграмм пользователей" as telegramm
 }
 
 cloud {
-agent "Сайты с данными" as externalData
+agent "Отчетность компаний" as externalData
 }
 
-parser<-->externalData : Парсинг
+parser<--externalData : Парсинг
 tracker-->storage : gRPC
 
-parser-->storage : gRPC
 
-storage-[thickness=4]->rabbit :"отправка задания на рассылку" 
-rabbit-[thickness=4]->notification : "вычитка заданий"
 
-market<-->tracker : "Запрос текущей цены эмитента"
+parser-[thickness=4]->rabbit_data
+rabbit_data-[thickness=4]->storage
+storage-[thickness=4]->rabbit_notifications
+rabbit_notifications-[thickness=4]->notification
+
+market--->tracker : "Запрос котировок"
 
 notification-->telegramm
 
-storage-->db
-db->storage
+rest <---> storage
+
+
+
+storage<->database
 @enduml
 ```
 
