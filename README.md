@@ -28,17 +28,45 @@
 ## Схемы сервиса
 ```plantuml
 @startuml
-component "Внутринние сервисы" {
-agent "Слежение за котировками" as tracker
-agent "Обработка данных" as storage
-agent "Рассылка уведомлений" as notification
-agent "Сбор данных" as parser
+actor "admin" as actor
 
-queue rabbitMQ as rabbit
+component "Внутринние сервисы" as internal {
+
+agent "Слежение за котировками" as tracker
+
+rectangle rect_processing as " " #aliceblue;line:blue;line.dotted;text:blue {
+agent "Обработка данных" as processing 
+
+database database_processing [
+<b>Postgres
+====
+Котировки
+----
+Справочник эмитентов
+----
+Отчетность
+]
+
+agent "Пользователи" as users_service
+
+database database_user [
+<b>Mongo
+====
+Цели пользователей
+----
+Пользователи
+]
+
 }
 
-component "Данные" {
-  database "База данных" as db
+agent "Рассылка уведомлений" as notification
+
+agent "Сбор данных" as parser
+
+queue "отчетность" as rabbit_data
+queue "котировки" as rabbit_quotes 
+queue "задания на рассылку" as rabbit_notifications
+
 }
 
 cloud {
@@ -50,23 +78,28 @@ agent "телеграмм пользователей" as telegramm
 }
 
 cloud {
-agent "Сайты с данными" as externalData
+agent "Отчетность компаний" as externalData
 }
 
-parser<-->externalData : Парсинг
-tracker-->storage : gRPC
+parser<--externalData : Парсинг
 
-parser-->storage : gRPC
+tracker-[dotted]->rabbit_quotes
 
-storage-[thickness=4]->rabbit :"отправка задания на рассылку" 
-rabbit-[thickness=4]->notification : "вычитка заданий"
+rabbit_quotes-[dotted]->processing
 
-market<-->tracker : "Запрос текущей цены эмитента"
+parser-[dotted]->rabbit_data
+rabbit_data-[dotted]->processing
+
+processing -[dotted]-> rabbit_notifications
+rabbit_notifications-[dotted]->notification
+
+processing <----> users_service : gRPC
+
+market--->tracker : "Запрос котировок"
 
 notification-->telegramm
 
-storage-->db
-db->storage
+actor <---> processing : REST
 @enduml
 ```
 
