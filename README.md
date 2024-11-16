@@ -28,78 +28,112 @@
 ## Схемы сервиса
 ```plantuml
 @startuml
-actor "admin" as actor
+actor "user" as actor
 
 component "Внутринние сервисы" as internal {
 
-agent "Слежение за котировками" as tracker
-
-rectangle rect_processing as " " #aliceblue;line:blue;line.dotted;text:blue {
-agent "Обработка данных" as processing 
-
-database database_processing [
-<b>Postgres
-====
-Котировки
-----
-Справочник эмитентов
-----
-Отчетность
-]
-
-agent "Пользователи" as users_service
-
-database database_user [
-<b>Mongo
-====
-Цели пользователей
-----
-Пользователи
-]
-
-}
-
-agent "Рассылка уведомлений" as notification
-
-agent "Сбор данных" as parser
-
-queue "отчетность" as rabbit_data
-queue "котировки" as rabbit_quotes 
-queue "задания на рассылку" as rabbit_notifications
+    artifact {
+        agent "Котировки" as tracker
+        database database_quotes [
+            <b>Redis
+            ====
+            Кэш
+        ]
+    }
+    
+    rectangle rect_processing as "Бизнес логика" #aliceblue;line:blue;line.dotted;text:blue {
+        artifact  {
+            agent "Обработка данных" as processing 
+            database database_processing [
+                <b>Postgres
+                ====
+                Котировки
+                ----
+                Эмитенты
+                ----
+                Отчетность
+            ]
+        }
+        
+        
+        artifact {
+            agent "Пользователи и цели" as users_service 
+            
+            database database_user [
+                <b>Mongo
+                ====
+                Цели
+                ----
+                Пользователи
+            ]
+        }
+    }
+    
+    
+    artifact {
+        agent "Рассылка уведомлений" as notification
+        database database_notification [
+                <b>Mongo
+                ====
+                Журнал рассылок
+            ]
+    }
+    
+    artifact { 
+        agent "Отчетсность" as parser
+        database database_parser [
+            <b>Redis
+            ====
+            Кэш
+        ]
+    }
+    
+    queue "отчетность" as rabbit_fundamentals
+    queue "котировки" as rabbit_quotes 
+    queue "задания на рассылку" as rabbit_notifications
 
 }
 
 cloud {
-component "API Мосбиржи" as market
+    agent "www.smartlab.ru" as externalData
+}
+
+artifact { 
+    agent "API gateway" as api_gateway
+    database database_auth[
+        <b>Mongo
+        ====
+        Токены
+    ] 
 }
 
 cloud {
-agent "телеграмм пользователей" as telegramm
+    agent "Мосбиржа" as market
 }
 
 cloud {
-agent "Отчетность компаний" as externalData
+    agent "телеграмм пользователей" as telegramm
 }
 
-parser<--externalData : Парсинг
+externalData --> parser: Парсинг
 
-tracker-[dotted]->rabbit_quotes
-
+tracker--[dotted]->rabbit_quotes
 rabbit_quotes-[dotted]->processing
 
-parser-[dotted]->rabbit_data
-rabbit_data-[dotted]->processing
+parser--[dotted]->rabbit_fundamentals
+rabbit_fundamentals-[dotted]->processing
 
 processing -[dotted]-> rabbit_notifications
 rabbit_notifications-[dotted]->notification
 
-processing <----> users_service : gRPC
+users_service --> processing : gRPC
 
-market--->tracker : "Запрос котировок"
+market-->tracker : "API"
 
 notification-->telegramm
 
-actor <---> processing : REST
+api_gateway <---> users_service : gRPC
+actor <--> api_gateway : REST
 @enduml
 ```
 

@@ -2,6 +2,7 @@ package config
 
 import (
 	"flag"
+	"fmt"
 	"github.com/ilyakaznacheev/cleanenv"
 	"os"
 	"time"
@@ -14,6 +15,14 @@ type Config struct {
 	Tick        time.Duration `toml:"tick" env-default:"1"`
 	Moex        string        `toml:"moex"`
 	DataService string        `toml:"dataService"`
+
+	SourceUrl      string `toml:"SOURCE_URL"`
+	RabbitUser     string `toml:"RABBIT_USER"`
+	RabbitPassword string `toml:"RABBIT_PASSWORD"`
+	RabbitHost     string `toml:"RABBIT_HOST"`
+	RabbitPort     int64  `toml:"RABBIT_PORT"`
+	RabbitQueue    string `toml:"RABBIT_QUEUE"`
+	RabbitDsn      string
 }
 
 func MustLoad() *Config {
@@ -32,6 +41,7 @@ func MustLoad() *Config {
 	if err := cleanenv.ReadConfig(configPath, &cfg); err != nil {
 		panic("config path is empty: " + err.Error())
 	}
+	cfg.RabbitDsn = InitRabbitDSN(&cfg)
 
 	return &cfg
 }
@@ -45,4 +55,10 @@ func fetchConfigPath() string {
 	}
 
 	return res
+}
+
+func InitRabbitDSN(c *Config) string {
+	return fmt.Sprintf(
+		"amqp://%s:%s@%s:%d/", c.RabbitUser, c.RabbitPassword, c.RabbitHost, c.RabbitPort,
+	)
 }

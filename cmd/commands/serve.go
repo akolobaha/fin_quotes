@@ -2,16 +2,20 @@ package commands
 
 import (
 	"context"
+	"encoding/xml"
 	"fin_quotes/internal/config"
-	"fin_quotes/internal/grpc"
 	"fin_quotes/internal/quotes"
+	"fin_quotes/internal/transport"
 	"github.com/spf13/cobra"
 	"log/slog"
+	"strconv"
+	"sync"
 	"time"
 )
 
-func NewServeCmd(config *config.Config, ctx context.Context, log *slog.Logger) *cobra.Command {
+func NewServeCmd(ctx context.Context, config *config.Config, rabbit *transport.Rabbitmq, log *slog.Logger) *cobra.Command {
 	var configPath string
+
 	c := &cobra.Command{
 		Use:     "period",
 		Aliases: []string{"s"},
@@ -28,14 +32,29 @@ func NewServeCmd(config *config.Config, ctx context.Context, log *slog.Logger) *
 						slog.Error(err.Error())
 					}
 
-					grpc.SendQuotes(ctx, data, config)
+					//grpc.SendQuotes(ctx, data, config)
 
+					var wg sync.WaitGroup
+
+					for idx, row := range data.Rows {
+						wg.Add(1)
+						func() {
+							defer wg.Done()
+							bytes, err := xml.Marshal(row)
+							if err != nil {
+								slog.Error(err.Error())
+							}
+
+							rabbit.SendMsg(bytes)
+							slog.Info(strconv.Itoa(idx), string(bytes))
+						}()
+					}
+					wg.Wait()
 				case <-ctx.Done():
 					log.Info("Сбор данных остановлен")
 					return nil
 				}
 			}
-
 		},
 	}
 

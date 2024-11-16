@@ -4,6 +4,7 @@ import (
 	"context"
 	"fin_quotes/cmd/commands"
 	"fin_quotes/internal/config"
+	"fin_quotes/internal/transport"
 	"fmt"
 	"log/slog"
 	"os"
@@ -33,7 +34,12 @@ func main() {
 
 	log.Info("Сервис запущен")
 
-	cmd := commands.NewServeCmd(cfg, ctx, log)
+	rabbit := transport.New()
+	rabbit.InitConn(cfg)
+	defer rabbit.ConnClose()
+	rabbit.DeclareQueue(cfg.RabbitQueue)
+
+	cmd := commands.NewServeCmd(ctx, cfg, rabbit, log)
 
 	cmd.ExecuteContext(ctx)
 }

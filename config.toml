@@ -11,3 +11,9 @@ moex = "https://iss.moex.com/iss/engines/stock/markets/shares/boards/TQBR/securi
 dataService = "localhost:50052"
 # Сервис обарботки данных докер
 #dataService = "app:50052"
+
+RABBIT_USER = "user"
+RABBIT_PASSWORD = "password"
+RABBIT_HOST = "localhost"
+RABBIT_PORT = 5672
+RABBIT_QUEUE = "quotes"
