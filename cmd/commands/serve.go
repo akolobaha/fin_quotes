@@ -2,13 +2,12 @@ package commands
 
 import (
 	"context"
-	"encoding/xml"
+	"encoding/json"
 	"fin_quotes/internal/config"
 	"fin_quotes/internal/quotes"
 	"fin_quotes/internal/transport"
 	"github.com/spf13/cobra"
 	"log/slog"
-	"strconv"
 	"sync"
 	"time"
 )
@@ -27,29 +26,31 @@ func NewServeCmd(ctx context.Context, config *config.Config, rabbit *transport.R
 				select {
 				case <-tick:
 					data, err := quotes.Fetch(config.Moex)
-					slog.Info("Данные с Мосбиржи получены")
 					if err != nil {
-						slog.Error(err.Error())
+						//slog.Error(err)
+					} else {
+						slog.Info("Данные с Мосбиржи получены")
 					}
-
-					//grpc.SendQuotes(ctx, data, config)
-
+					//
+					////grpc.SendQuotes(ctx, data, config)
+					//
 					var wg sync.WaitGroup
 
-					for idx, row := range data.Rows {
+					for _, row := range data {
 						wg.Add(1)
 						func() {
 							defer wg.Done()
-							bytes, err := xml.Marshal(row)
+							bytes, err := json.Marshal(row)
 							if err != nil {
 								slog.Error(err.Error())
 							}
 
 							rabbit.SendMsg(bytes)
-							slog.Info(strconv.Itoa(idx), string(bytes))
 						}()
 					}
-					wg.Wait()
+					slog.Info("Котировки отправленны в брокер сообщений")
+
+					//wg.Wait()
 				case <-ctx.Done():
 					log.Info("Сбор данных остановлен")
 					return nil
