@@ -2,10 +2,10 @@
 env = "local"
 
 # Время между запросами (наносек)
-tick = 3000000000
+tick = 1000000000
 
 # Котировки
-moex = "https://iss.moex.com/iss/engines/stock/markets/shares/boards/TQBR/securities.xml?iss.meta=off&iss.only=marketdata&marketdata.columns=SECID,LAST,TIME,SEQNUM"
+moex = "https://iss.moex.com/iss/engines/stock/markets/shares/boards/TQBR/securities.xml?iss.meta=off&iss.only=marketdata&marketdata.columns=SECID,LAST,TIME,SEQNUM,ISSUECAPITALIZATION"
 
 # Сервис обарботки данных
 dataService = "localhost:50052"

@@ -12,11 +12,12 @@ type MarketData struct {
 }
 
 type Security struct {
-	Ticker string  `xml:"SECID,attr" json:"Ticker"`
-	Price  float32 `xml:"LAST,attr" json:"Price"`
-	Time   string  `xml:"TIME,attr" json:"Time"`
-	SeqNum string  `xml:"SEQNUM,attr" json:"SeqNum"`
-	Pref   *Security
+	Ticker         string  `xml:"SECID,attr" json:"Ticker"`
+	Price          float32 `xml:"LAST,attr" json:"Price"`
+	Time           string  `xml:"TIME,attr" json:"Time"`
+	SeqNum         string  `xml:"SEQNUM,attr" json:"SeqNum"`
+	Capitalization string  `xml:"ISSUECAPITALIZATION,attr" json:"Capitalization"`
+	Pref           *Security
 }
 
 func Fetch(url string) (map[string]Security, error) {

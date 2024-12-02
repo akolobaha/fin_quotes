@@ -47,11 +47,7 @@ component "Внутринние сервисы" as internal {
             database database_processing [
                 <b>Postgres
                 ====
-                Котировки
-                ----
-                Эмитенты
-                ----
-                Отчетность
+                Достигнутые цели
             ]
         }
         
@@ -60,11 +56,15 @@ component "Внутринние сервисы" as internal {
             agent "Пользователи и цели" as users_service 
             
             database database_user [
-                <b>Mongo
+                <b>Postgres
                 ====
+                Пользователи
+                ----
+                Токены
+                ----
                 Цели
                 ----
-                Пользователи
+                Тикеры
             ]
         }
     }
@@ -98,21 +98,14 @@ cloud {
     agent "www.smartlab.ru" as externalData
 }
 
-artifact { 
-    agent "API gateway" as api_gateway
-    database database_auth[
-        <b>Mongo
-        ====
-        Токены
-    ] 
-}
+
 
 cloud {
     agent "Мосбиржа" as market
 }
 
 cloud {
-    agent "телеграмм пользователей" as telegramm
+    agent "Пользователи" as telegramm
 }
 
 externalData --> parser: Парсинг
@@ -132,8 +125,8 @@ market-->tracker : "API"
 
 notification-->telegramm
 
-api_gateway <---> users_service : gRPC
-actor <--> api_gateway : REST
+
+actor <---> users_service : REST
 @enduml
 ```
 
