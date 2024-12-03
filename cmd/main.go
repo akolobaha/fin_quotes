@@ -5,7 +5,6 @@ import (
 	"fin_quotes/cmd/commands"
 	"fin_quotes/internal/config"
 	"fin_quotes/internal/transport"
-	"fmt"
 	"log/slog"
 	"os"
 	"os/signal"
@@ -18,11 +17,14 @@ const (
 	envProd  = "prod"
 )
 
-func main() {
-	cfg := config.MustLoad()
-	log := setupLogger(cfg.Env)
+const defaultEnvFilePath = "./config.toml"
 
-	fmt.Println(cfg.Tick)
+func main() {
+	cfg, err := config.Parse(defaultEnvFilePath)
+	if err != nil {
+		panic("Ошибка парсинга конфигов")
+	}
+
 	ctx, cancel := context.WithCancel(context.Background())
 
 	go func() {
@@ -32,14 +34,14 @@ func main() {
 		cancel()
 	}()
 
-	log.Info("Сервис запущен")
+	slog.Info("Сервис запущен")
 
 	rabbit := transport.New()
 	rabbit.InitConn(cfg)
 	defer rabbit.ConnClose()
 	rabbit.DeclareQueue(cfg.RabbitQueue)
 
-	cmd := commands.NewServeCmd(ctx, cfg, rabbit, log)
+	cmd := commands.NewServeCmd(ctx, cfg, rabbit)
 
 	cmd.ExecuteContext(ctx)
 }

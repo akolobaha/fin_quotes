@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-func NewServeCmd(ctx context.Context, config *config.Config, rabbit *transport.Rabbitmq, log *slog.Logger) *cobra.Command {
+func NewServeCmd(ctx context.Context, config *config.Config, rabbit *transport.Rabbitmq) *cobra.Command {
 	var configPath string
 
 	c := &cobra.Command{
@@ -52,7 +52,7 @@ func NewServeCmd(ctx context.Context, config *config.Config, rabbit *transport.R
 
 					//wg.Wait()
 				case <-ctx.Done():
-					log.Info("Сбор данных остановлен")
+					slog.Info("Сбор данных остановлен")
 					return nil
 				}
 			}

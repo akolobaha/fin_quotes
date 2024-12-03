@@ -17,7 +17,7 @@ func New() *Rabbitmq {
 
 func (rabbit *Rabbitmq) InitConn(cfg *config.Config) {
 	// Установите соединение с RabbitMQ
-	conn, err := amqp.Dial(cfg.RabbitDsn)
+	conn, err := amqp.Dial(cfg.GetRabbitDSN())
 	if err != nil {
 		log.Fatalf("Failed to connect to RabbitMQ: %s", err)
 	}
@@ -36,14 +36,17 @@ func (rabbit *Rabbitmq) ConnClose() {
 }
 
 func (rabbit *Rabbitmq) DeclareQueue(name string) {
-	// Объявите очередь, в которую будете отправлять сообщения
+	args := amqp.Table{
+		"x-message-ttl": int32(60000), // TTL 60 секунд
+	}
+
 	queue, err := rabbit.Chan.QueueDeclare(
 		name,  // имя очереди
-		false, // durable
+		false, // durable постоянная очередь
 		false, // delete when unused
 		false, // exclusive
 		false, // no-wait
-		nil,   // аргументы
+		args,  // аргументы
 	)
 	rabbit.Queue = queue
 	if err != nil {
@@ -58,7 +61,7 @@ func (rabbit *Rabbitmq) SendMsg(data []byte) {
 		false,             // обязательное
 		false,             // немедленное
 		amqp.Publishing{
-			DeliveryMode: amqp.Persistent, // сохранять сообщение
+			DeliveryMode: amqp.Transient, // сохранять сообщение
 			ContentType:  "text/plain",
 			Body:         data,
 		})
