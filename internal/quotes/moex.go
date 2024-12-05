@@ -2,7 +2,7 @@ package quotes
 
 import (
 	"encoding/xml"
-	"io/ioutil"
+	"io"
 	"log/slog"
 	"net/http"
 )
@@ -30,7 +30,7 @@ func Fetch(url string) (map[string]Security, error) {
 
 	defer resp.Body.Close()
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		slog.Error(err.Error())
 		return map[string]Security{}, err

@@ -34,20 +34,16 @@ component "Внутринние сервисы" as internal {
 
     artifact {
         agent "Котировки" as tracker
-        database database_quotes [
-            <b>Redis
-            ====
-            Кэш
-        ]
+   
     }
     
     rectangle rect_processing as "Бизнес логика" #aliceblue;line:blue;line.dotted;text:blue {
         artifact  {
             agent "Обработка данных" as processing 
             database database_processing [
-                <b>Postgres
+                <b>MongoDB
                 ====
-                Достигнутые цели
+                Отчетность
             ]
         }
         
@@ -81,11 +77,6 @@ component "Внутринние сервисы" as internal {
     
     artifact { 
         agent "Отчетсность" as parser
-        database database_parser [
-            <b>Redis
-            ====
-            Кэш
-        ]
     }
     
     queue "отчетность" as rabbit_fundamentals
@@ -119,7 +110,7 @@ rabbit_fundamentals-[dotted]->processing
 processing -[dotted]-> rabbit_notifications
 rabbit_notifications-[dotted]->notification
 
-users_service --> processing : gRPC
+users_service <--> processing : gRPC
 
 market-->tracker : "API"
 

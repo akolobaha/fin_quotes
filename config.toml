@@ -17,3 +17,4 @@ RABBIT_PASSWORD = "password"
 RABBIT_HOST = "localhost"
 RABBIT_PORT = 5672
 RABBIT_QUEUE = "quotes"
+LOG_LEVEL = "info" # debug, info, error, warn
