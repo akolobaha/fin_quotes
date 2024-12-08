@@ -13,7 +13,7 @@ type Config struct {
 	Moex        string        `toml:"moex"`
 	DataService string        `toml:"dataService"`
 
-	SourceUrl      string `toml:"SOURCE_URL"`
+	SourceURL      string `toml:"SOURCE_URL"`
 	RabbitUser     string `toml:"RABBIT_USER"`
 	RabbitPassword string `toml:"RABBIT_PASSWORD"`
 	RabbitHost     string `toml:"RABBIT_HOST"`

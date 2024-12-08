@@ -28,7 +28,7 @@ func main() {
 		cancel()
 	}()
 
-	slog.Info("Сервис запущен")
+	slog.Info("Сервис слежения за котировами запущен")
 
 	rabbit := transport.New()
 	rabbit.InitConn(cfg)

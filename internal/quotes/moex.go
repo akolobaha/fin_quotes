@@ -44,8 +44,6 @@ func Fetch(url string) (map[string]Security, error) {
 	}
 
 	// Упаковать префы как вложенные структуры у обычных акий
-	// prefsObjectsMap
-
 	prefsMap := make(map[string]Security)
 	for _, row := range data.Rows {
 		pref, exists := PrefRev[row.Ticker]
@@ -73,7 +71,7 @@ func Fetch(url string) (map[string]Security, error) {
 	return rowsMap, nil
 }
 
-var PrefRev map[string]string = map[string]string{
+var PrefRev = map[string]string{
 	"VJGZP": "VJGZ",
 	"MISBP": "MISB",
 	"RTSBP": "RTSB",
@@ -119,7 +117,7 @@ var PrefRev map[string]string = map[string]string{
 	"YRSBP": "YRSB",
 }
 
-var Pref map[string]string = map[string]string{
+var Pref = map[string]string{
 	"VJGZ": "VJGZP",
 	"MISB": "MISBP",
 	"RTSB": "RTSBP",

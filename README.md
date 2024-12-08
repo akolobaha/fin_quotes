@@ -32,11 +32,6 @@ actor "user" as actor
 
 component "Внутринние сервисы" as internal {
 
-    artifact {
-        agent "Котировки" as tracker
-   
-    }
-    
     rectangle rect_processing as "Бизнес логика" #aliceblue;line:blue;line.dotted;text:blue {
         artifact  {
             agent "Обработка данных" as processing 
@@ -52,7 +47,7 @@ component "Внутринние сервисы" as internal {
             agent "Пользователи и цели" as users_service 
             
             database database_user [
-                <b>Postgres
+                <b>PostgreSQL
                 ====
                 Пользователи
                 ----
@@ -67,21 +62,30 @@ component "Внутринние сервисы" as internal {
     
     
     artifact {
-        agent "Рассылка уведомлений" as notification
+        
         database database_notification [
-                <b>Mongo
+                <b>MongoDB
                 ====
                 Журнал рассылок
             ]
+        agent "Рассылка уведомлений по email" as notification
     }
-    
+
+
+    rectangle rect_data as "Данные" #aliceblue;line:blue;line.dotted;text:blue {
     artifact { 
-        agent "Отчетсность" as parser
+        agent "Отчетность" as parser
+    }
+
+    artifact {
+        agent "Котировки" as tracker
+   
+    }
     }
     
-    queue "отчетность" as rabbit_fundamentals
-    queue "котировки" as rabbit_quotes 
-    queue "задания на рассылку" as rabbit_notifications
+    queue "RabbitMQ: отчетность" as rabbit_fundamentals
+    queue "RabbitMQ: котировки" as rabbit_quotes 
+    queue "RabbitMQ: задания на рассылку email" as rabbit_notifications
 
 }
 
@@ -101,20 +105,22 @@ cloud {
 
 externalData --> parser: Парсинг
 
-tracker--[dotted]->rabbit_quotes
+tracker-[dotted]->rabbit_quotes
 rabbit_quotes-[dotted]->processing
 
-parser--[dotted]->rabbit_fundamentals
+parser-[dotted]->rabbit_fundamentals
 rabbit_fundamentals-[dotted]->processing
 
-processing -[dotted]-> rabbit_notifications
+users_service -[dotted]>rabbit_notifications
+
+processing -[dotted]> rabbit_notifications
 rabbit_notifications-[dotted]->notification
 
 users_service <--> processing : gRPC
 
 market-->tracker : "API"
 
-notification-->telegramm
+notification->telegramm
 
 
 actor <---> users_service : REST

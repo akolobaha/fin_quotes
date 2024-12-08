@@ -3,7 +3,7 @@ package transport
 import (
 	"fin_quotes/internal/config"
 	"github.com/streadway/amqp"
-	"log"
+	"log/slog"
 )
 
 type Rabbitmq struct {
@@ -19,7 +19,7 @@ func (rabbit *Rabbitmq) InitConn(cfg *config.Config) {
 	// Установите соединение с RabbitMQ
 	conn, err := amqp.Dial(cfg.GetRabbitDSN())
 	if err != nil {
-		log.Fatalf("Failed to connect to RabbitMQ: %s", err)
+		slog.Error("Failed to connect to RabbitMQ:", "error", err)
 	}
 
 	// Создайте канал
@@ -27,7 +27,7 @@ func (rabbit *Rabbitmq) InitConn(cfg *config.Config) {
 	rabbit.Chan = ch
 
 	if err != nil {
-		log.Fatalf("Failed to open a channel: %s", err)
+		slog.Error("Failed to open a channel: ", "error", err)
 	}
 }
 
@@ -50,7 +50,7 @@ func (rabbit *Rabbitmq) DeclareQueue(name string) {
 	)
 	rabbit.Queue = queue
 	if err != nil {
-		log.Fatalf("Failed to declare a queue: %s", err)
+		slog.Error("Failed to declare a queue: ", "error", err)
 	}
 }
 
@@ -66,6 +66,6 @@ func (rabbit *Rabbitmq) SendMsg(data []byte) {
 			Body:         data,
 		})
 	if err != nil {
-		log.Fatalf("Failed to publish a message: %s", err)
+		slog.Error("Failed to publish a message: ", "error", err)
 	}
 }
