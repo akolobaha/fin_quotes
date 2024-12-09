@@ -4,14 +4,19 @@ import (
 	"context"
 	"fin_quotes/cmd/commands"
 	"fin_quotes/internal/config"
+	"fin_quotes/internal/log"
+	"fin_quotes/internal/monitoring"
 	"fin_quotes/internal/transport"
-	"log/slog"
 	"os"
 	"os/signal"
 	"syscall"
 )
 
 const defaultEnvFilePath = "./config.toml"
+
+func init() {
+	monitoring.RegisterPrometheus()
+}
 
 func main() {
 	cfg, err := config.Parse(defaultEnvFilePath)
@@ -28,12 +33,14 @@ func main() {
 		cancel()
 	}()
 
-	slog.Info("Сервис слежения за котировами запущен")
+	log.Info("Сервис слежения за котировами запущен")
 
 	rabbit := transport.New()
 	rabbit.InitConn(cfg)
 	defer rabbit.ConnClose()
 	rabbit.DeclareQueue(cfg.RabbitQueue)
+
+	monitoring.RunPrometheusServer(cfg.GetPrometheusURL())
 
 	commands.NewServeCmd(ctx, cfg, rabbit)
 

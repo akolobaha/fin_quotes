@@ -2,8 +2,8 @@ package quotes
 
 import (
 	"encoding/xml"
+	"fin_quotes/internal/log"
 	"io"
-	"log/slog"
 	"net/http"
 )
 
@@ -24,7 +24,7 @@ func Fetch(url string) (map[string]Security, error) {
 
 	resp, err := http.Get(url)
 	if err != nil {
-		slog.Error(err.Error())
+		log.Error("", err)
 		return map[string]Security{}, err
 	}
 
@@ -32,14 +32,14 @@ func Fetch(url string) (map[string]Security, error) {
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		slog.Error(err.Error())
+		log.Error("", err)
 		return map[string]Security{}, err
 	}
 	//
 	var data MarketData
 	err = xml.Unmarshal(body, &data)
 	if err != nil {
-		slog.Error(err.Error())
+		log.Error("", err)
 		return map[string]Security{}, err
 	}
 

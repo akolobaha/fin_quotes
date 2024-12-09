@@ -4,9 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fin_quotes/internal/config"
+	"fin_quotes/internal/log"
 	"fin_quotes/internal/quotes"
 	"fin_quotes/internal/transport"
-	"log/slog"
+	"fmt"
 	"sync"
 	"time"
 )
@@ -20,9 +21,9 @@ func NewServeCmd(ctx context.Context, config *config.Config, rabbit *transport.R
 		case <-ticker.C:
 			data, err := quotes.Fetch(config.Moex)
 			if err != nil {
-				slog.Error(err.Error())
+				log.Error("Ошибка получения данных с API мосбиржи", err)
 			} else {
-				slog.Info("Данные с Мосбиржи получены")
+				log.Info("Данные с Мосбиржи получены")
 			}
 
 			var wg sync.WaitGroup
@@ -33,16 +34,16 @@ func NewServeCmd(ctx context.Context, config *config.Config, rabbit *transport.R
 					defer wg.Done()
 					bytes, err := json.Marshal(row)
 					if err != nil {
-						slog.Error(err.Error())
+						log.Error("", err)
 					}
 
 					rabbit.SendMsg(bytes)
 				}()
 			}
-			slog.Info("Котировки отправленны в брокер сообщений")
+			log.Info(fmt.Sprintf("Котировки отправленны в брокер сообщений %d шт", len(data)))
 
 		case <-ctx.Done():
-			slog.Info("Сбор данных остановлен")
+			log.Info("Сбор данных остановлен")
 			return
 		}
 	}
