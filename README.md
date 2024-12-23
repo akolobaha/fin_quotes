@@ -28,7 +28,8 @@
 ## Схемы сервиса
 ```plantuml
 @startuml
-actor "user" as actor
+actor "Пользователь REST" as actor
+actor "Пользователь Телеграм" as tg_user
 
 component "Внутринние сервисы" as internal {
 
@@ -44,7 +45,7 @@ component "Внутринние сервисы" as internal {
         
         
         artifact {
-            agent "Пользователи и цели" as users_service 
+            agent "Пользователи" as users_service 
             
             database database_user [
                 <b>PostgreSQL
@@ -53,22 +54,30 @@ component "Внутринние сервисы" as internal {
                 ----
                 Токены
                 ----
-                Цели
-                ----
                 Тикеры
+            ]
+        }
+
+        
+
+        artifact {
+            agent "Цели" as targets_service 
+            
+            database database_targets [
+                <b>PostgreSQL
+                ====
+                Цели
             ]
         }
     }
     
     
     artifact {
-        
-        database database_notification [
-                <b>MongoDB
-                ====
-                Журнал рассылок
-            ]
         agent "Рассылка уведомлений по email" as notification
+    }
+    
+    artifact {
+        agent "Рассылка уведомлений telegram" as notification_telegram
     }
 
 
@@ -81,11 +90,18 @@ component "Внутринние сервисы" as internal {
         agent "Котировки" as tracker
    
     }
+    artifact {
+        agent "Дивиденды" as dividends
+   
+    }
     }
     
     queue "RabbitMQ: отчетность" as rabbit_fundamentals
     queue "RabbitMQ: котировки" as rabbit_quotes 
+    queue "RabbitMQ: дивиденды" as rabbit_dividends
     queue "RabbitMQ: задания на рассылку email" as rabbit_notifications
+    
+    queue "RabbitMQ: задания на рассылку telegram" as rabbit_notifications_telegram
 
 }
 
@@ -106,24 +122,32 @@ cloud {
 externalData --> parser: Парсинг
 
 tracker-[dotted]->rabbit_quotes
+dividends-[dotted]->rabbit_dividends
 rabbit_quotes-[dotted]->processing
+rabbit_dividends-[dotted]->processing
 
 parser-[dotted]->rabbit_fundamentals
 rabbit_fundamentals-[dotted]->processing
 
-users_service -[dotted]>rabbit_notifications
+targets_service -[dotted]>rabbit_notifications
 
-processing -[dotted]> rabbit_notifications
 rabbit_notifications-[dotted]->notification
 
-users_service <--> processing : gRPC
+targets_service -[dotted]>rabbit_notifications_telegram
+rabbit_notifications_telegram-[dotted]->notification_telegram
+
+users_service <--> targets_service : gRPC
+targets_service <--> processing : gRPC
 
 market-->tracker : "API"
+market-->dividends : "API"
 
-notification->telegramm
+notification-->telegramm
+notification_telegram-->telegramm
 
 
-actor <---> users_service : REST
+ actor <--> users_service : REST
+ tg_user <--> users_service : Telegram
 @enduml
 ```
 
