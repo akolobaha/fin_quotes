@@ -2,43 +2,49 @@ package commands
 
 import (
 	"context"
+	"encoding/json"
 	"fin_quotes/internal/config"
-	"fin_quotes/internal/grpc"
+	"fin_quotes/internal/log"
 	"fin_quotes/internal/quotes"
-	"github.com/spf13/cobra"
-	"log/slog"
+	"fin_quotes/internal/transport"
+	"fmt"
+	"sync"
 	"time"
 )
 
-func NewServeCmd(config *config.Config, ctx context.Context, log *slog.Logger) *cobra.Command {
-	var configPath string
-	c := &cobra.Command{
-		Use:     "period",
-		Aliases: []string{"s"},
-		Short:   "Tick rate period",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			tick := time.Tick(config.Tick)
+func NewServeCmd(ctx context.Context, config *config.Config, rabbit *transport.Rabbitmq) {
+	ticker := time.NewTicker(config.Tick)
+	defer ticker.Stop()
 
-			for {
-				select {
-				case <-tick:
-					data, err := quotes.Fetch(config.Moex)
-					slog.Info("Данные с Мосбиржи получены")
-					if err != nil {
-						slog.Error(err.Error())
-					}
-
-					grpc.SendQuotes(ctx, data, config)
-
-				case <-ctx.Done():
-					log.Info("Сбор данных остановлен")
-					return nil
-				}
+	for {
+		select {
+		case <-ticker.C:
+			data, err := quotes.Fetch(config.Moex)
+			if err != nil {
+				log.Error("Ошибка получения данных с API мосбиржи", err)
+			} else {
+				log.Info("Данные с Мосбиржи получены")
 			}
 
-		},
-	}
+			var wg sync.WaitGroup
 
-	c.Flags().StringVar(&configPath, "config", "", "path to config")
-	return c
+			for _, row := range data {
+				wg.Add(1)
+				func() {
+					defer wg.Done()
+					bytes, err := json.Marshal(row)
+					if err != nil {
+						log.Error("", err)
+					}
+
+					rabbit.SendMsg(bytes)
+				}()
+			}
+			log.Info(fmt.Sprintf("Котировки отправленны в брокер сообщений %d шт", len(data)))
+
+		case <-ctx.Done():
+			log.Info("Сбор данных остановлен")
+			return
+		}
+	}
 }

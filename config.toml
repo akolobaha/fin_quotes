@@ -2,12 +2,22 @@
 env = "local"
 
 # Время между запросами (наносек)
-tick = 3000000000
+tick = 1000000000
 
 # Котировки
-moex = "https://iss.moex.com/iss/engines/stock/markets/shares/boards/TQBR/securities.xml?iss.meta=off&iss.only=marketdata&marketdata.columns=SECID,LAST,TIME,SEQNUM"
+moex = "https://iss.moex.com/iss/engines/stock/markets/shares/boards/TQBR/securities.xml?iss.meta=off&iss.only=marketdata&marketdata.columns=SECID,LAST,TIME,SEQNUM,ISSUECAPITALIZATION"
 
 # Сервис обарботки данных
 dataService = "localhost:50052"
 # Сервис обарботки данных докер
 #dataService = "app:50052"
+
+RABBIT_USER = "user"
+RABBIT_PASSWORD = "password"
+RABBIT_HOST = "localhost"
+RABBIT_PORT = 5672
+RABBIT_QUEUE = "quotes"
+LOG_LEVEL = "info" # debug, info, error, warn
+
+PROMETHEUS_HOST = "localhost"
+PROMETHEUS_PORT = 8091

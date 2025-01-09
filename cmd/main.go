@@ -4,24 +4,26 @@ import (
 	"context"
 	"fin_quotes/cmd/commands"
 	"fin_quotes/internal/config"
-	"fmt"
-	"log/slog"
+	"fin_quotes/internal/log"
+	"fin_quotes/internal/monitoring"
+	"fin_quotes/internal/transport"
 	"os"
 	"os/signal"
 	"syscall"
 )
 
-const (
-	envLocal = "local"
-	envDev   = "dev"
-	envProd  = "prod"
-)
+const defaultEnvFilePath = "./config.toml"
+
+func init() {
+	monitoring.RegisterPrometheus()
+}
 
 func main() {
-	cfg := config.MustLoad()
-	log := setupLogger(cfg.Env)
+	cfg, err := config.Parse(defaultEnvFilePath)
+	if err != nil {
+		panic("Ошибка парсинга конфигов")
+	}
 
-	fmt.Println(cfg.Tick)
 	ctx, cancel := context.WithCancel(context.Background())
 
 	go func() {
@@ -31,30 +33,15 @@ func main() {
 		cancel()
 	}()
 
-	log.Info("Сервис запущен")
+	log.Info("Сервис слежения за котировами запущен")
 
-	cmd := commands.NewServeCmd(cfg, ctx, log)
+	rabbit := transport.New()
+	rabbit.InitConn(cfg)
+	defer rabbit.ConnClose()
+	rabbit.DeclareQueue(cfg.RabbitQueue)
 
-	cmd.ExecuteContext(ctx)
-}
+	monitoring.RunPrometheusServer(cfg.GetPrometheusURL())
 
-func setupLogger(env string) *slog.Logger {
-	var log *slog.Logger
+	commands.NewServeCmd(ctx, cfg, rabbit)
 
-	switch env {
-	case envLocal:
-		log = slog.New(
-			slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}),
-		)
-	case envDev:
-		log = slog.New(
-			slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}),
-		)
-	case envProd:
-		log = slog.New(
-			slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}),
-		)
-	}
-
-	return log
 }

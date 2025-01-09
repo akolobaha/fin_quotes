@@ -7,3 +7,7 @@ tasks:
     cmds:
       -  curl -o pkg/grpc/data_management_grpc.pb.go https://raw.githubusercontent.com/akolobaha/fin_data_processing/fin_data_processing/pkg/grpc/data_management_grpc.pb.go
       -  curl -o pkg/grpc/data_management.pb.go https://raw.githubusercontent.com/akolobaha/fin_data_processing/fin_data_processing/pkg/grpc/data_management.pb.go
+  vet:
+    go vet ./...
+  lint:
+    golangci-lint run

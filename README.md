@@ -28,80 +28,126 @@
 ## Схемы сервиса
 ```plantuml
 @startuml
-
-actor "admin" as actor
-
-component "API gateway" as gateway {
-agent "REST" as rest
-}
-
-actor <---> rest
-
+actor "Пользователь REST" as actor
+actor "Пользователь Телеграм" as tg_user
 
 component "Внутринние сервисы" as internal {
-agent "Слежение за котировками" as tracker
-agent "Обработка данных" as storage
-agent "Рассылка уведомлений" as notification
-agent "Сбор данных" as parser
+
+    rectangle rect_processing as "Бизнес логика" #aliceblue;line:blue;line.dotted;text:blue {
+        artifact  {
+            agent "Обработка данных" as processing 
+            database database_processing [
+                <b>MongoDB
+                ====
+                Отчетность
+            ]
+        }
+        
+        
+        artifact {
+            agent "Пользователи" as users_service 
+            
+            database database_user [
+                <b>PostgreSQL
+                ====
+                Пользователи
+                ----
+                Токены
+                ----
+                Тикеры
+            ]
+        }
+
+        
+
+        artifact {
+            agent "Цели" as targets_service 
+            
+            database database_targets [
+                <b>PostgreSQL
+                ====
+                Цели
+            ]
+        }
+    }
+    
+    
+    artifact {
+        agent "Рассылка уведомлений по email" as notification
+    }
+    
+    artifact {
+        agent "Рассылка уведомлений telegram" as notification_telegram
+    }
 
 
-queue rabbitMQ {
-queue "сырые данные" as rabbit_data {
+    rectangle rect_data as "Данные" #aliceblue;line:blue;line.dotted;text:blue {
+    artifact { 
+        agent "Отчетность" as parser
+    }
+
+    artifact {
+        agent "Котировки" as tracker
+   
+    }
+    artifact {
+        agent "Дивиденды" as dividends
+   
+    }
+    }
+    
+    queue "RabbitMQ: отчетность" as rabbit_fundamentals
+    queue "RabbitMQ: котировки" as rabbit_quotes 
+    queue "RabbitMQ: дивиденды" as rabbit_dividends
+    queue "RabbitMQ: задания на рассылку email" as rabbit_notifications
+    
+    queue "RabbitMQ: задания на рассылку telegram" as rabbit_notifications_telegram
 
 }
-queue "задания на рассылку" as rabbit_notifications
 
+cloud {
+    agent "www.smartlab.ru" as externalData
 }
 
-
-database database [
-<b>Postgres
-====
-Котировки
-----
-Справочник эмитентов
-----
-Отчетность
-----
-Цели пользователей
-----
-Пользователи
-
-]
-}
 
 
 cloud {
-component "API Мосбиржи" as market
+    agent "Мосбиржа" as market
 }
 
 cloud {
-agent "телеграмм пользователей" as telegramm
+    agent "Пользователи" as telegramm
 }
 
-cloud {
-agent "Отчетность компаний" as externalData
-}
+externalData --> parser: Парсинг
 
-parser<--externalData : Парсинг
-tracker-->storage : gRPC
+tracker-[dotted]->rabbit_quotes
+dividends-[dotted]->rabbit_dividends
+rabbit_quotes-[dotted]->processing
+rabbit_dividends-[dotted]->processing
 
+parser-[dotted]->rabbit_fundamentals
+rabbit_fundamentals-[dotted]->processing
 
+targets_service -[dotted]>rabbit_notifications
 
-parser-[thickness=4]->rabbit_data
-rabbit_data-[thickness=4]->storage
-storage-[thickness=4]->rabbit_notifications
-rabbit_notifications-[thickness=4]->notification
+rabbit_notifications-[dotted]->notification
 
-market--->tracker : "Запрос котировок"
+targets_service -[dotted]>rabbit_notifications_telegram
+rabbit_notifications_telegram-[dotted]->notification_telegram
+
+users_service <--> targets_service : gRPC
+targets_service <--> processing : gRPC
+
+market-->tracker : "API"
+market-->dividends : "API"
 
 notification-->telegramm
-
-rest <---> storage
-
+notification_telegram-->telegramm
 
 
-storage<->database
+ actor <--> users_service : REST
+ tg_user <--> users_service : Telegram
 @enduml
 ```
 
